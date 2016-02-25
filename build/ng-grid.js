@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 11/04/2014 09:19
+* Compiled At: 02/25/2016 18:23
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -314,6 +314,13 @@ angular.module('ngGrid.services').factory('$domUtilityService',['$utilityService
         grid.styleSheet = style;
         grid.styleText = css;
     };
+    domUtilityService.availableWidth = function($scope, grid) {
+        var availableWidth = grid.rootDim.outerWidth;
+        if (grid.maxCanvasHt > $scope.viewportDimHeight()) {
+            availableWidth -= domUtilityService.ScrollW;
+        }
+        return availableWidth;
+    };
     domUtilityService.BuildStyles = function($scope, grid, digest) {
         var rowHeight = grid.config.rowHeight,
             gridId = grid.gridId,
@@ -331,8 +338,8 @@ angular.module('ngGrid.services').factory('$domUtilityService',['$utilityService
             var col = cols[i];
             if (col.visible !== false) {
                 var rightPad = 0;
-                if ((i === cols.length - 1) && (sumWidth + col.width < grid.elementDims.rootMaxW)) {
-                    rightPad = grid.elementDims.rootMaxW - sumWidth - col.width;
+                if (i === cols.length - 1) {
+                    rightPad = Math.max(domUtilityService.availableWidth($scope, grid) - (sumWidth + col.width), 0);
                 }
                 css += "." + gridId + " .col" + i + " { width: " + (col.width + rightPad) + "px; left: " + sumWidth + "px; height: " + rowHeight + "px }" +
                     "." + gridId + " .colt" + i + " { width: " + (col.width + rightPad) + "px; }";
@@ -1615,10 +1622,7 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
         }
         if (asterisksArray.length > 0) {
             self.config.maintainColumnRatios = self.config.maintainColumnRatios !== false;
-            var remainingWidth = self.rootDim.outerWidth - totalWidth;
-            if (self.maxCanvasHt > $scope.viewportDimHeight()) {
-                remainingWidth -= domUtilityService.ScrollW;
-            }
+            var remainingWidth = domUtilityService.availableWidth($scope, self) - totalWidth;
             var asteriskVal = Math.floor(remainingWidth / asteriskNum);
             angular.forEach(asterisksArray, function(colDef, i) {
                 var ngColumn = $scope.columns[indexMap[colDef.index]];
@@ -1682,6 +1686,7 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
             }
         });
     };
+
     self.resizeOnData = function(col) {
         var longest = col.minWidth;
         var arr = $utils.getElementsByClassName('col' + col.index);

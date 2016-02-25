@@ -110,6 +110,15 @@
         grid.styleSheet = style;
         grid.styleText = css;
     };
+    domUtilityService.availableWidth = function($scope, grid) {
+        var availableWidth = grid.rootDim.outerWidth;
+        // are we overflowing vertically?
+        if (grid.maxCanvasHt > $scope.viewportDimHeight()) {
+            //compensate for scrollbar
+            availableWidth -= domUtilityService.ScrollW;
+        }
+        return availableWidth;
+    };
     domUtilityService.BuildStyles = function($scope, grid, digest) {
         var rowHeight = grid.config.rowHeight,
             gridId = grid.gridId,
@@ -127,8 +136,8 @@
             var col = cols[i];
             if (col.visible !== false) {
                 var rightPad = 0;
-                if ((i === cols.length - 1) && (sumWidth + col.width < grid.elementDims.rootMaxW)) {
-                    rightPad = grid.elementDims.rootMaxW - sumWidth - col.width;
+                if (i === cols.length - 1) {
+                    rightPad = Math.max(domUtilityService.availableWidth($scope, grid) - (sumWidth + col.width), 0);
                 }
                 css += "." + gridId + " .col" + i + " { width: " + (col.width + rightPad) + "px; left: " + sumWidth + "px; height: " + rowHeight + "px }" +
                     "." + gridId + " .colt" + i + " { width: " + (col.width + rightPad) + "px; }";
